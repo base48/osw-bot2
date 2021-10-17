@@ -39,41 +39,41 @@ type Rest struct {
 var sw Sw
 
 func main() {
+	sw.log, _ = syslog.New(syslog.LOG_INFO|syslog.LOG_ERR, "osw-bot2")
+	sw.log.Info("Start")
+
+	rpio.Open()
+	sw.os = rpio.Pin(17)
+	sw.cs = rpio.Pin(4)
+	sw.ol = rpio.Pin(22)
+	sw.cl = rpio.Pin(23)
+	sw.be = rpio.Pin(27)
+	sw.ol.Output();	sw.cl.Output();	sw.be.Output()
+
+	rs := httprouter.New()		// rest aspi
+	rs.GET("/", rest)
+	go http.ListenAndServe(fmt.Sprintf("%s:%d", "0.0.0.0", port), rs)
+
 	for{
 		con, _ := net.Dial("tcp", address)
 		cb := bufio.NewReader(con)
-		rpio.Open()
-
-		sw.os = rpio.Pin(17)
-		sw.cs = rpio.Pin(4)
-		sw.ol = rpio.Pin(22)
-		sw.cl = rpio.Pin(23)
-		sw.be = rpio.Pin(27)
-
-		sw.log, _ = syslog.New(syslog.LOG_INFO|syslog.LOG_ERR, "osw-bot2")
-		sw.ol.Output();	sw.cl.Output();	sw.be.Output()
 		sw.log.Info("Connecting")
-
-		rs := httprouter.New()
-		rs.GET("/", rest)
-		go http.ListenAndServe(fmt.Sprintf("%s:%d", "0.0.0.0", port), rs) // rest api server thread
-
-		ch := make(chan string)
-		go checksw(con, ch) // check sw thread
 
 		con.Write([]byte(fmt.Sprintf("NICK %s\n", nick)))
 		con.Write([]byte(fmt.Sprintf("USER %s 0 * :improved open switch bot\n", nick)))
 		con.Write([]byte(fmt.Sprintf("JOIN %s\n", channel)))
+
+		ch := make(chan string)
+		go checksw(con, ch) // check sw thread
 
 		for{
 			str, err := cb.ReadString('\n')
 			if err != nil { sw.log.Err(err.Error()); break }
 			eval(str, con, ch)
 		}
-
-		rpio.Close()
-		time.Sleep(2 * time.Minute)
+		time.Sleep(5 * time.Minute)
 	}
+	rpio.Close()
 }
 
 func rest(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -128,7 +128,6 @@ func checksw(con net.Conn, ch chan string){
 			if len(two) >= 2 { last = two[1] }
 			con.Write([]byte(fmt.Sprintf("TOPIC %s :base open \\o/ |%s\n", channel, last)))
 			sw.log.Info("base open")
-			sw.oc = true
 			sw.lastch = time.Now()
 		}
 		if os == 0 && cs == 1 && ! strings.HasPrefix(topic, "base closed") &&
@@ -136,8 +135,7 @@ func checksw(con net.Conn, ch chan string){
 			two := strings.SplitN(topic, "|", 2); last := ""; to = 5
 			if len(two) >= 2 { last = two[1] }
 			con.Write([]byte(fmt.Sprintf("TOPIC %s :base closed :( |%s\n", channel, last)))
-			sw.log.Info("base close")
-			sw.oc = false
+			sw.log.Info("base closed")
 			sw.lastch = time.Now()
 		}
 
