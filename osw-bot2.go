@@ -126,6 +126,7 @@ func checksw(con net.Conn, ch chan string){
 			len(topic) != 0 && to == 0{
 			two := strings.SplitN(topic, "|", 2); last := ""; to = 10
 			if len(two) >= 2 { last = two[1] }
+			fmt.Printf("os %n, cs %n, topic: %s", os, cs, topic)
 			con.Write([]byte(fmt.Sprintf("TOPIC %s :base open \\o/ |%s\n", channel, last)))
 			sw.log.Info("base open")
 			sw.oc = true
@@ -135,14 +136,15 @@ func checksw(con net.Conn, ch chan string){
 			len(topic) != 0 && to == 0{
 			two := strings.SplitN(topic, "|", 2); last := ""; to = 10
 			if len(two) >= 2 { last = two[1] }
+			fmt.Printf("os %n, cs %n, topic: %s", os, cs, topic)
 			con.Write([]byte(fmt.Sprintf("TOPIC %s :base closed :( |%s\n", channel, last)))
 			sw.log.Info("base closed")
 			sw.oc = false
 			sw.lastch = time.Now()
 		}
 
-		if strings.HasPrefix(topic, "base open") { sw.ol.Write(os) }
-		if strings.HasPrefix(topic, "base closed") { sw.cl.Write(cs) }
+		if strings.HasPrefix(topic, "base open") { sw.ol.Write(os); sw.oc = true }
+		if strings.HasPrefix(topic, "base closed") { sw.cl.Write(cs); sw.oc = false }
 
 		if to != 0{ to-- }
 		time.Sleep(1 * time.Second)
