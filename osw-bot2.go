@@ -47,7 +47,7 @@ func main() {
 	sw.cs = rpio.Pin(4)
 	sw.ol = rpio.Pin(22)
 	sw.cl = rpio.Pin(23)
-	sw.be = rpio.Pin(27)
+	sw.be = rpio.Pin(21)
 	sw.ol.Output();	sw.cl.Output();	sw.be.Output()
 
 	rs := httprouter.New()		// rest aspi
