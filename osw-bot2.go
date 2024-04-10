@@ -129,7 +129,7 @@ func checksw(con net.Conn, ch chan string){
 			fmt.Printf("os %n, cs %n, topic: %s", os, cs, topic)
 			con.Write([]byte(fmt.Sprintf("TOPIC %s :base open \\o/ |%s\n", channel, last)))
 			sw.log.Info("base open")
-			sw.oc = true
+//			sw.oc = true
 			sw.lastch = time.Now()
 		}
 		if os == 0 && cs == 1 && ! strings.HasPrefix(topic, "base closed") &&
@@ -139,7 +139,7 @@ func checksw(con net.Conn, ch chan string){
 			fmt.Printf("os %n, cs %n, topic: %s", os, cs, topic)
 			con.Write([]byte(fmt.Sprintf("TOPIC %s :base closed :( |%s\n", channel, last)))
 			sw.log.Info("base closed")
-			sw.oc = false
+//			sw.oc = false
 			sw.lastch = time.Now()
 		}
 
